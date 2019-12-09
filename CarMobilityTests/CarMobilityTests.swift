@@ -6,29 +6,41 @@
 //  Copyright © 2019 Jesus. All rights reserved.
 //
 
+import Foundation
 import XCTest
+import RxSwift
+import Moya
 @testable import CarMobility
 
-class CarMobilityTests: XCTestCase {
-
+class PlaceMarkerTest: XCTestCase {
+    
+    private var viewModel: PlaceMarkListViewModel?
+    private var provider = MoyaProvider<PlaceMarkAPI>.init(stubClosure: MoyaProvider<PlaceMarkAPI>.immediatelyStub)
+    private let disposeBag = DisposeBag()
+    
     override func setUp() {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+        super.setUp()
+        viewModel =  PlaceMarkListViewModel(with: provider)
     }
-
-    override func tearDown() {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
-    }
-
-    func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-    }
-
-    func testPerformanceExample() {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
+    
+    func test_placeMarkList_ShouldBeEqualTo() {
+        var marks: [PlaceMark] = []
+        let expectedCount: Int = 423
+        provider = MoyaProvider<PlaceMarkAPI>.init(stubClosure: MoyaProvider<PlaceMarkAPI>.immediatelyStub)
+        let expectation =  self.expectation(description: "start fetching cars")
+        provider.rx.request(.placeMarkList)
+            .map(PlaceMarkList.self)
+            .asObservable()
+            .subscribe(onNext: { list in
+                marks = list.placeMarks
+                expectation.fulfill()
+            }).disposed(by: disposeBag)
+        
+        waitForExpectations(timeout: 5) { error in
+            if (error != nil) {
+                XCTFail("sample data fail")
+            }
         }
+        XCTAssertEqual(marks.count, expectedCount)
     }
-
 }
